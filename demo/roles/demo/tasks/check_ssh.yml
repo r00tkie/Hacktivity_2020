@@ -1,0 +1,30 @@
+---
+# Check if a SSH allows empty password
+- name: STIG | Check if a SSH allows empty password
+  become: true
+  lineinfile:
+    state: present
+    path: /etc/ssh/sshd_config
+    regexp: ^#?PermitEmptyPasswords
+    line: '#PermitEmptyPasswords no'
+  check_mode: yes
+  register: ssh_pass
+  changed_when: false
+  
+- debug: msg="Empty Password is not enabled in SSH"
+  when: ssh_pass is not changed
+
+
+- name: STIG |Check if SSH allows Root login
+  become: true
+  lineinfile:
+    state: present
+    path: /etc/ssh/sshd_config
+    regexp: ^#?PermitRootLogin
+    line: '#PermitRootLogin no'
+  check_mode: yes
+  register: ssh_root
+  changed_when: false
+  
+- debug: msg="Root login is not enabled in SSH"
+  when: ssh_root is not changed

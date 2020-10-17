@@ -1,0 +1,10 @@
+---
+- name: STIG | find binaries with suid/sgid set | os-06
+  shell: find / -xdev \( -perm -4000 -o -perm -2000 \) -type f ! -path '/proc/*' -print 2>/dev/null
+  register: sbit_binaries
+  # Error Handling .. shell module is prone to errors, thus for this playbook the rc 0/1 are not considered failures
+  failed_when: sbit_binaries.rc != 1 and sbit_binaries.rc != 0
+  changed_when: false
+
+- debug:
+    var: sbit_binaries.stdout_lines

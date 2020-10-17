@@ -1,0 +1,5 @@
+---
+- name: Running Infra Automation Checks
+  hosts: demo
+  roles:
+    - demo

@@ -1,0 +1,14 @@
+# Includes task to create a report
+---
+
+- name: Create the report template
+  template:
+    src: report.j2
+    dest: "{{folder}}/{{ansible_hostname}}-{{env}}-{{ansible_date_time.date}}-{{ansible_date_time.time}}.html"
+    force: yes
+  register: filename
+  delegate_to: localhost
+
+- debug:
+    var: filename.dest
+

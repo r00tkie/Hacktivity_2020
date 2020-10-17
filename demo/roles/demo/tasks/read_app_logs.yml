@@ -1,0 +1,35 @@
+# Attacker manipulates application logs
+---
+- name: ING | Check for readable - writable application log files
+  find:
+    paths: /
+    file_type: file
+    # follow: yes
+    recurse: yes
+    hidden: yes
+    use_regex: yes
+    patterns: 
+      - '(?i)^.*{{ application }}.*\.logs$'        
+  register: application_logs
+  check_mode: yes
+  ignore_errors: yes
+ 
+
+- set_fact: 
+    app_logs_writeble: "{{ application_logs.files | to_json | from_json |json_query(\"[?ends_with(mode, '2') == `true`|| ends_with(mode, '3') == `true`|| ends_with(mode, '6') == `true`||ends_with(mode, '7') == `true`].{gr_name: gr_name, mode: mode, path: path }\") }}"
+
+- debug:
+    var: app_logs_writeble
+  run_once: True
+
+- set_fact: 
+    app_logs_readable: "{{ application_logs.files | to_json | from_json |json_query(\"[?ends_with(mode, '4') == `true`|| ends_with(mode, '5') == `true`|| ends_with(mode, '6') == `true`||ends_with(mode, '7') == `true`].{gr_name: gr_name, mode: mode, path: path }\") }}"
+
+- debug:
+    var: app_logs_readable
+  run_once: True
+
+
+
+
+

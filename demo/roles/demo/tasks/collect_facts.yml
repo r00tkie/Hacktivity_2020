@@ -1,0 +1,46 @@
+# Gather facts from remote hosts
+---
+
+- name: Ansible task execution start time
+  debug:
+    var: ansible_date_time.time
+    #ADD: ansible_date_time.date
+
+# Get remote IP (4 and 6)
+- debug:
+    var: ansible_facts.all_ipv4_addresses
+
+- debug:
+    var: ansible_facts.all_ipv6_addresses    
+
+# Get hostname
+- debug:
+    var: ansible_hostname
+ 
+# Get Kernel Version
+- debug: 
+    var: ansible_kernel
+    
+# Get OS info
+- debug:
+    var: ansible_distribution
+- debug:    
+    var: ansible_distribution_version
+
+# Get selinux status
+- debug:
+    var: ansible_selinux
+
+# Get AppArmor
+- debug:
+    var: ansible_apparmor
+
+# ENV
+- debug:
+    var: ansible_env
+
+# Get mounted devices
+- set_fact: 
+    mounts: "{{ ansible_mounts | json_query('[].{device:device, mount:mount}') }}"
+- debug:
+    var: mounts

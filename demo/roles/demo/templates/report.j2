@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title> Report for {{ansible_hostname}} </title>
+  </head>
+
+  <div class=container id="wrapper" title="body-wrapper">
+  <body>
+    <h4> Hostname: {{ansible_hostname}} </h4>
+    </br>
+
+
+    <!-- Start of Findings Summary Table -->
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th scope="col">Task</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td><a class="nav-link" href="#facts">Collecting Remote Facts</a></td>
+          <td>NP</td>
+        </tr>
+
+        <tr>
+          <td><a class="nav-link" href="#ssh">Check SSH Config</a></td>
+          {% if ssh_pass.changed == False and ssh_root.changed == False %}
+          <td><font color="green">Passed</font></td>
+          {% else %}
+          <td>Manual Check</td>
+          {% endif %}
+        </tr>
+
+        <tr>
+          <td><a class="nav-link" href="#application_logs">Check Application Logs</a></td>
+          {% if app_logs_writeble and app_logs_readable | length == 0 %}
+          <td><font color="green">Passed</font></td>
+          {% else %}
+           <td>Manual Check</td>
+          {% endif %}
+        </tr>
+
+        <tr>
+          <td><a class="nav-link" href="#suid_guid">Check for SUID - GUID </a></td>
+          {% if sbit_binaries.stdout_lines | length == 0 %}
+          <td><font color="green">Passed</font></td>
+          {% else %}
+           <td>Manual Check</td>
+          {% endif %}
+        </tr>
+
+        <tr>
+          <td><a class="nav-link" href="#secret_logs">Check for secrets in application log files </a></td>
+          {% if app_secret_logs | length == 0 %}
+          <td><font color="green">Passed</font></td>
+          {% else %}
+           <td>Manual Check</td>
+          {% endif %}
+        </tr>
+
+        <tr>
+          <td><a class="nav-link" href="#secret_conf">Check for secrets in sensitive files </a></td>
+          {% if log | length == 0 %}
+          <td><font color="green">Passed</font></td>
+          {% else %}
+           <td>Manual Check</td>
+          {% endif %}
+        </tr>
+
+    </table>
+    <!-- End of Findings Summary Table -->
+
+
+
+    <div class=container id="facts" title="collect_facts">
+      <h2> Collecting Remote Facts </h2>
+      <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapse1" aria-expanded="false" aria-controls="collapse1"> Show result
+      </button>
+      <div class="collapse" id="collapse1">
+        <p>
+          <strong> Report for host: </strong>
+           {{ansible_hostname}}, {{ansible_date_time.date}} and {{ansible_date_time.time}}
+        </p>
+
+        <p>
+          <strong> The system </strong>
+            {{ansible_hostname}}
+          <strong> has the following IP information: </strong>
+        </p>
+
+        <strong> Remote IPV4 : </strong>
+          {% for ip in ansible_facts.all_ipv4_addresses %}
+            <p> {{ ip }} </p>
+          {% endfor %}
+
+        <strong> Remote IPV6 : </strong>
+          {% for ip in ansible_facts.all_ipv6_addresses %}
+            <p> {{ ip }} </p>
+          {% endfor %}
+
+        <p>
+          <strong>
+            Kernel version:
+          </strong> {{ansible_kernel}}
+        </p>
+
+        <p>
+          <strong> OS: </strong>
+          {{ansible_distribution}} - {{ansible_distribution_version}}
+        </p>
+
+        <p>
+          <strong> AppArmor: </strong>
+          Status: {{ansible_apparmor.status}}
+        </p>
+
+          <strong> Mounts: </strong>
+          {% for mount in mounts %}
+            <p>
+              Device: {{mount.device}} </br>
+              Mount: {{mount.mount}} </br>
+            </p>
+          {% endfor %}
+
+          {% if ansible_selinux.mode=='permissive' %}
+            <font color="red">
+              <strong> SELINUX: </strong>
+                <p> status: {{ ansible_selinux.status }} </p>
+                <p> mode: {{ ansible_selinux.mode }} </p>
+            </font>
+          {% else %}
+              <strong> SELINUX: </strong>
+                <p> status: {{ ansible_selinux.status }} </p>
+                <p> mode: {{ ansible_selinux.mode }} </p>
+          {% endif %}
+      </div>
+    </div>
+    <p></p>
+    <p></p>
+
+    <div class=container id="ssh" title="check_ssh">
+      <h2> Report for ssh status </h2>
+      <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapse0" aria-expanded="false" aria-controls="collapse0"> Show result
+      </button>
+      <div class="collapse" id="collapse0">
+        <strong> Check if ssh allows root or empty password login: </strong>
+        <p> 
+          {% if ssh_pass.changed == true %}
+            <p> Empty password is allowed </p>
+            <font color="red"> 
+            <p> FAILED </p>
+            </font>
+          {% else %}
+            <p> Empty password is not allowed </p>
+            <font color="green">
+            <p> PASSED </p>
+            </font>
+          {%endif%}
+        </p>
+
+        <p>
+          {% if ssh_root.changed == true %}
+            <p> Root login is allowed </p> 
+            <font color="red">
+            <p> FAILED </p>
+            </font>
+          {% else %}
+            <p> Root login is not allowed </p>
+            <font color="green">
+            <p> PASSED </p>
+            </font>
+          {%endif%}
+        </p>
+      </div>
+    </div>
+    <p></p>
+    <p></p>
+
+    <div class=container id="application_logs" title="read_app_logs">
+
+      <h2> Report for Application log files </h2>
+      <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapse2" aria-expanded="false" aria-controls="collapse2"> Show result
+        </button>
+        <div class="collapse" id="collapse2">
+          <strong> Check if application logs are writable: </strong>
+          <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Log</th>
+                  <th scope="col">Group permissions</th>
+                  <th scope="col">Permissions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for app in app_logs_writeble %}
+                    <tr>
+                      <td>{{app.path}} </td>
+                      <td>{{app.gr_name}}</td>
+                      <td>{{app.mode}}</td>
+                    </tr>
+                {% endfor %}
+              </tbody>
+          </table>
+          <p></p>
+          <p></p>
+          <strong> Check if application logs are readable: </strong>
+          <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Log</th>
+                  <th scope="col">Group permissions</th>
+                  <th scope="col">Permissions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for app in app_logs_readable %}
+                    <tr>
+                      <td>{{app.path}} </td>
+                      <td>{{app.gr_name}}</td>
+                      <td>{{app.mode}}</td>
+                    </tr>
+                {% endfor %}
+              </tbody>
+          </table>
+        </div>
+    </div>
+    <p></p>
+    <p></p>
+
+    <div class=container id="suid_guid" title="suid_guid">
+      <h2> Report for SUID - GUID files </h2>
+        <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapse3" aria-expanded="false" aria-controls="collapse3"> Show result
+        </button>
+      <div class="collapse" id="collapse3"> 
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th scope="col">files</th>
+            </tr>
+          </thead>
+          <tbody>
+              {% for bit in sbit_binaries.stdout_lines %}
+                <tr>
+                  <td>{{bit}} </td>
+                </tr>
+              {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p></p>
+    <p></p>
+
+    <div class=container id="secret_logs" title="secret_logs">
+      <h2> Report for Secrets in Application log files </h2>
+      <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapse4" aria-expanded="false" aria-controls="collapse4"> Show result
+        </button>
+        <div class="collapse" id="collapse4">
+          <strong> Check for secrets in application logs: </strong>
+          <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Log</th>
+                  <th scope="col">Group permissions</th>
+                  <th scope="col">Permissions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for app in app_secret_logs %}
+                    <tr>
+                      <td>{{app.path}} </td>
+                      <td>{{app.gr_name}}</td>
+                      <td>{{app.mode}}</td>
+                    </tr>
+                {% endfor %}
+              </tbody>
+          </table>
+        </div>
+    </div>
+    <p></p>
+    <p></p>
+
+    <div class=container id="secret_conf" title="secret_conf">
+      <h2> Report for Secrets in Sensitive files </h2>
+      <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapse5" aria-expanded="false" aria-controls="collapse5"> Show result
+        </button>
+        <div class="collapse" id="collapse5">
+          <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Log</th>
+                  <th scope="col">Group permissions</th>
+                  <th scope="col">Permissions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for logs in log %}
+                    <tr>
+                      <td>{{logs.path}} </td>
+                      <td>{{logs.gr_name}}</td>
+                      <td>{{logs.mode}}</td>
+                    </tr>
+                {% endfor %}
+              </tbody>
+          </table>
+        </div>
+    </div>
+    <p></p>
+    <p></p>
+
+
+
+
+
+
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+  </body>
+</html>

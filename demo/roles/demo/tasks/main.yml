@@ -1,0 +1,41 @@
+---
+# tasks file for demo role
+
+# FROM THIS POINT WE IMPORT OUR TASKS
+
+
+- name: Gather facts from remote hosts
+  import_tasks: collect_facts.yml
+  tags:
+    - collect_facts
+
+- name: Check if SSH allows empty passwords
+  import_tasks: check_ssh.yml
+  tags:
+    - check_ssh
+    
+- name: Check application logs
+  import_tasks: read_app_logs.yml
+  tags:
+    - read_app_logs
+
+- name: Check SUID - GUID files
+  import_tasks: suid_guid.yml
+  tags:
+    - suid_guid
+
+- name: Read secret from log files
+  import_tasks: read_secret_logs.yml
+  tags:
+    - read_secret_logs
+
+- name: Read secret from conf files
+  import_tasks: read_secret_conf.yml
+  tags:
+    - read_secret_conf
+
+- name: create the report
+  import_tasks: create_report.yml
+  tags: 
+    - report_create
+
